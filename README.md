@@ -1,8 +1,11 @@
 # MySql 5.5 Docker container
 
-## Start a mysql:5.5 container
+## Build a mysql5.5 Docker image
+- `docker build -t mysql5.5 .`
 
-Run this command to start a mysql 5.5 Docker container
+## Start a mysql5.5 container
+
+Run this command to start a mysql5.5 Docker container
 
 ```
 docker run \
@@ -10,7 +13,7 @@ docker run \
  -p 3306:3306 \
  -d \
  -e MYSQL_ROOT_HOST=% \
- mysql/mysql-server:5.5`
+ mysql5.5`
 ```
 
 | Docker argument | Description |
@@ -42,3 +45,27 @@ Alternatively, run the [run.sh](run.sh) bash script which contains this command.
 
 `docker exec -it mysql1 mysql -uroot -ppassword`
 
+## Case sensitivity per operating system
+Database and table names __are not__ case sensitive in Windows, and case sensitive in most varieties of Unix.
+
+#### Configure the database to ignore case sensitivity on table names
+The `lower_case_table_names` system variable determines if case sensitivity is enabled.  You can check the current value by running this query:
+- `show variables where Variable_name='lower_case_table_names'`
+
+There are three possible values for this:
+- __0__ - lettercase specified in the CREATE TABLE or CREATE DATABASE statement. Name comparisons are case sensitive.
+- __1__ - Table names are stored in lowercase on disk and name comparisons are not case sensitive.
+- __2__ - lettercase specified in the CREATE TABLE or CREATE DATABASE statement, but MySQL converts them to lowercase on lookup. Name comparisons are not case sensitive.
+
+#### Update the configuration file
+
+1. connect to the container `docker exec -it mysql1 bash`
+1. Locate file at /etc/mysql/my.cnf
+1. Edit the file by adding the following lines:
+
+    ```
+    [mysqld]
+    lower_case_table_names=1
+    ```
+1. run `sudo /etc/init.d/mysql restart`
+1. run `mysqladmin -u root -p variables | grep table` to check that `lower_case_table_names` is `1` now
