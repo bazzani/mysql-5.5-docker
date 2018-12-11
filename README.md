@@ -25,11 +25,23 @@ Alternatively, run the [run.sh](run.sh) bash script which contains this command.
 
 ## Configuration
 
+### Root password configuration
+
+#### Specify a root user password for the container
+
+In the Dockerfile, it is possible to set a password for the `root` user by specifying the following line
+- `ENV MYSQL_ROOT_PASSWORD password`
+
+_Alternatively..._
+
+#### Manually capture the generated password
 1. Get the generated password
- - `docker logs mysql1 2>&1 | grep GENERATED` = $GENERATED_PASSWORD
+`docker logs mysql1 2>&1 | grep GENERATED` = X
+
+`export MYSQL_PW='X'`
 
 1. Log in to mysql with the generated password
- - `docker exec -it mysql1 mysql -uroot -p$GENERATED_PASSWORD`
+ - `docker exec -it mysql1 mysql -uroot -p$MYSQL_PW`
 
 1. Update the root user password to _password_
  - `UPDATE mysql.user SET Password=PASSWORD('password') WHERE User='root';`
@@ -39,6 +51,8 @@ Alternatively, run the [run.sh](run.sh) bash script which contains this command.
 
 1. Log in to mysql again with the new password (_password_)
  - `docker exec -it mysql1 mysql -uroot -ppassword`
+
+----
 
 ## Case sensitivity per operating system
 
@@ -54,9 +68,10 @@ There are three possible values for this:
 - __1__ - Table names are stored in lowercase on disk and name comparisons are not case sensitive.
 - __2__ - lettercase specified in the CREATE TABLE or CREATE DATABASE statement, but MySQL converts them to lowercase on lookup. Name comparisons are not case sensitive.
 
-#### Dockerfile instruction support
+#### Dockerfile instruction support (default)
 
 The Dockerfile has an instruction to copy the configuration file to the file system to enable the case insensitivity
+
 `COPY my.cnf /etc/mysql/my.cnf`
 
 #### Check the _lower_case_table_names_ system variable
@@ -68,9 +83,26 @@ The result should be:
 - `| lower_case_table_names | 1 |`
 
 
+### Commit your current Docker container to a new Docker image
+It is a good idea to now create a new Docker image from the current state of the container with the default root user, and the case insensitive table names.
+
+- `docker commit mysql1 mysql5.5:vanilla`
+
+You can now create new containers from this image, which will have a default password set (e.g. password), and the case
+sensitivity settings will be configured properly.
+
+```
+docker run \
+--name=mysql-vanilla \
+ -p 3306:3306 \
+ -d \
+ -e MYSQL_ROOT_HOST=% \
+ mysql5.5:vanilla
+```
+
 ----
 
-#### OPTIONAL - Manually update the configuration file
+#### Manually update the configuration file (OPTIONAL)
 
 1. connect to the container `docker exec -it mysql1 bash`
 1. Locate file at /etc/mysql/my.cnf
