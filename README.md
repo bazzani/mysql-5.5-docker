@@ -13,7 +13,7 @@ docker run \
  -p 3306:3306 \
  -d \
  -e MYSQL_ROOT_HOST=% \
- mysql5.5`
+ mysql5.5
 ```
 
 | Docker argument | Description |
